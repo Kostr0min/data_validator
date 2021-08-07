@@ -3,6 +3,7 @@ from typing import List
 import json
 from tools.data_scanner import DataScanner
 
+
 class DataChecker:
 
     def __init__(self, path_to_configure_json: str = None):

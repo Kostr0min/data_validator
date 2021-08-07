@@ -2,6 +2,7 @@ import pandas as pd
 from typing import List
 import numpy as np
 import json
+from json import JSONDecodeError
 
 
 class DataScanner:
@@ -25,7 +26,7 @@ class DataScanner:
             try:
                 with open(self.path_to_conf_json, 'r') as f:
                     conf_dict = json.load(f)
-            except FileNotFoundError:
+            except (FileNotFoundError, JSONDecodeError):
                 print(f'Ignore this warning if new json. \n'
                       f'Invalid path to config json: {self.path_to_conf_json}')
         return conf_dict
@@ -37,6 +38,25 @@ class DataScanner:
                 json.dump(self.collected_configs, f, indent=4)
         except FileNotFoundError:
             print(f'Invalid path to configuraton json: {path_to_config}')
+
+    @staticmethod
+    def check_for_types_in_every_column(dataframe: pd.DataFrame):
+        """
+        Check all columns values by type() and store unique types with column key
+
+        govnocode edition
+
+        :param dataframe:
+        :return:
+        """
+        types_dict = {}
+        for col in dataframe.columns:
+            val = dataframe[col].apply(lambda x: type(x)).unique()
+            types_dict[col] = [str(x)[8:-2] for x in val]
+            if len(val) > 1:
+                print(f"WARNING, NOT ALL VALUES ARE OF THE SAME TYPE. COLUMN {col}\n",
+                      f"TYPES {val}")
+        return types_dict
 
     @staticmethod
     def statistics_extractor(dataframe: pd.DataFrame, numeric_columns: List[str] = None):
@@ -70,7 +90,8 @@ class DataScanner:
         """
         config_dict = {'dtypes_': dataframe.dtypes.apply(lambda x: x.name).to_dict(),
                        'columns_': dataframe.columns.to_list(), 'shape_': list(dataframe.shape),
-                       'numeric_columns_stats': self.statistics_extractor(dataframe)}
+                       'numeric_columns_stats': self.statistics_extractor(dataframe),
+                       'unique_types': self.check_for_types_in_every_column(dataframe)}
         if blank_shot:
             return config_dict
         if name not in self.collected_configs.keys():
