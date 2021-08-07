@@ -1,0 +1,11 @@
+[MASTER]
+
+[SIMILARITIES]
+ignore-comments=yes
+ignore-docstrings=yes
+
+[FORMAT]
+max-line-length=120
+
+[MESSAGES CONTROL]
+disable=C0103, C0116, C0413, W0401, W0611, W0614, W1202, W1203, C0411

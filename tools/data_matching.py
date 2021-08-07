@@ -1,6 +1,8 @@
-import pandas as pd
-from typing import List
 import json
+from typing import List
+
+import pandas as pd
+
 from tools.data_scanner import DataScanner
 
 
@@ -24,10 +26,12 @@ class DataChecker:
         conf_dict = {}
         if self.path_to_configure_json:
             try:
-                with open(self.path_to_configure_json, 'r') as f:
+                with open(self.path_to_configure_json) as f:
                     conf_dict = json.load(f)
             except FileNotFoundError:
-                print(f'Invalid path to configuration json: {self.path_to_configure_json}')
+                print(
+                    f'Invalid path to configuration json: {self.path_to_configure_json}',
+                )
         return conf_dict
 
     def extract_and_compare(self, *dataframes, data_names: dict = None, comparison_categories: List[str] = None):
@@ -41,13 +45,17 @@ class DataChecker:
             version = self.collected_configures[name]['last_version']
             valid_df_configuration = self.collected_configures[name][version]
             current_df_configuration = self.worker.scan(df, blank_shot=True)
-            valid_df_configuration = {x: y for x, y in
-                                      valid_df_configuration.items() if x in
-                                      comparison_categories} if comparison_categories else valid_df_configuration
+            valid_df_configuration = {
+                x: y for x, y in
+                valid_df_configuration.items() if x in
+                comparison_categories
+            } if comparison_categories else valid_df_configuration
 
-            current_df_configuration = {x: y for x, y in
-                                        current_df_configuration.items() if x in
-                                        comparison_categories} if comparison_categories else current_df_configuration
+            current_df_configuration = {
+                x: y for x, y in
+                current_df_configuration.items() if x in
+                comparison_categories
+            } if comparison_categories else current_df_configuration
 
             result_dict[name] = valid_df_configuration == current_df_configuration
         return result_dict
