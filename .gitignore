@@ -1,2 +1,4 @@
 .idea/
 dvalid
+.pytest_cache
+tests/.pytest_cache
