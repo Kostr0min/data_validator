@@ -7,6 +7,7 @@ import numpy as np
 from tools.column_classifier import ColumnClassifier
 from tests.conftest import test_data
 
+
 @pytest.fixture()
 def test_answers():
     return dict(numeric=['enrollee_id', 'city_development_index', 'training_hours', 'target'],
@@ -47,7 +48,7 @@ def test_datetime(test_data, test_answers):
     _data = pd.DataFrame({'a': pd.date_range(pd.Timestamp('today'), periods=10),
                           'b': pd.date_range(pd.Timestamp('today'), periods=10, freq='D').strftime('%Y/%m/%d'),
                           'c': range(10),
-                          'd': ['d'] * 10,})
+                          'd': ['d'] * 10, })
     _datetime = classifier.extract_datetime(_data)
     for obj in _datetime:
         assert isinstance(obj, str)
