@@ -1,11 +1,6 @@
-from typing import List
-
 import numpy as np
-import pandas as pd
 import seaborn as sns
 from fitter import Fitter
-from fitter import get_common_distributions
-from fitter import get_distributions
 from scipy.stats import beta
 from scipy.stats import burr
 from scipy.stats import gamma
@@ -19,22 +14,36 @@ class FitDistr:
         self.scipy_match_dict = {'lognorm': lognorm, 'beta': beta, 'burr': burr, 'norm': norm, 'gamma': gamma}
         self.dist_with_params = None
 
-    def find_distribution(
-        self, data: np.array, summary: bool = True,
-        valid_distr: List[str] = [
+    @classmethod
+    def _find_distribution(
+        cls,
+        data: np.array, summary: bool = True,
+        valid_distr: set = (
             'gamma', 'lognorm',
             'beta', 'burr', 'norm',
-        ],
+        ),
     ):
-
         fit_dist = Fitter(
             data,
-            distributions=valid_distr,
+            distributions=list(valid_distr),
         )
         fit_dist.fit()
         if summary:
             fit_dist.summary()
         result_dist = fit_dist.get_best(method='sumsquare_error')
+
+        return result_dist
+
+    def find_distribution(
+        self,
+        data: np.array, summary: bool = True,
+        valid_distr: set = (
+            'gamma', 'lognorm',
+            'beta', 'burr', 'norm',
+        ),
+    ):
+        result_dist = self._find_distribution(data, summary=True, valid_distr=valid_distr)
+
         self.dist_with_params = result_dist
 
         return result_dist
@@ -52,8 +61,8 @@ class FitDistr:
             dist = self.scipy_match_dict[list(self.dist_with_params.keys())[0]]
             return dist.rvs(*list(self.dist_with_params.values())[0], size=sample_size)
 
-    @staticmethod
-    def bootstrapper(array: np.array, n_bootstrap: int = 1000, conf_level: int = 95) -> dict:
+    @classmethod
+    def bootstrapper(cls, array: np.array, n_bootstrap: int = 1000, conf_level: int = 95) -> dict:
         params_distribution = {'mean': [], 'median': []}
         for i in range(n_bootstrap):
             sampled = np.random.choice(array, array.shape[0])

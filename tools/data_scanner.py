@@ -5,6 +5,8 @@ from typing import List
 import numpy as np
 import pandas as pd
 
+from tools.stat_tools import FitDistr
+
 
 class DataScanner:
     """
@@ -65,7 +67,7 @@ class DataScanner:
         return types_dict
 
     @staticmethod
-    def statistics_extractor(dataframe: pd.DataFrame, numeric_columns: List[str] = None):
+    def statistics_extractor(dataframe: pd.DataFrame, numeric_columns: List[str] = None) -> dict:
         """
         Simple pandas describe data extractor
         numeric_columns: list of numeric columns names
@@ -75,9 +77,17 @@ class DataScanner:
         ).columns
         return dataframe[columns_list].describe().to_dict()
 
+    @staticmethod
+    def bootstrap_stats_extractor(dataframe: pd.DataFrame, numeric_columns: List[str]):
+        bootstrap_stats_result = {}
+        for num_col in numeric_columns:
+            stats = FitDistr.bootstrapper(dataframe[num_col].values)
+            bootstrap_stats_result[num_col] = stats
+        return bootstrap_stats_result
+
     def scan(self, dataframe: pd.DataFrame, name: str = None, version: str = None, blank_shot: bool = False):
         """
-        Base json-element creator. Collect all data by key [version] for dataframe key [name] in
+        Base json-element creator using extractor methods. Collect all data by key [version] for dataframe key [name] in
         self.collected_configures
         Parameters
         ----------
@@ -96,11 +106,18 @@ class DataScanner:
         >>> data_scanner.scan(df, 'digits_and_words', 'version_1')
 
         """
+        # TODO: add data, extracted using column classificator and make a copy of dataframe with new classified types
         config_dict = {
             'dtypes_': dataframe.dtypes.apply(lambda x: x.name).to_dict(),
             'columns_': dataframe.columns.to_list(), 'shape_': list(dataframe.shape),
             'numeric_columns_stats': self.statistics_extractor(dataframe),
             'unique_types': self.check_for_types_in_every_column(dataframe),
+            'bootstrap_stats': self.bootstrap_stats_extractor(
+                dataframe,
+                numeric_columns=dataframe.select_dtypes(
+                    include=np.number,
+                ).columns.tolist(),
+            ),
         }
         if blank_shot:
             return config_dict

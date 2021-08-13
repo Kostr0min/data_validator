@@ -38,7 +38,7 @@ def test_datascanner_scan(test_data, path: str = './test_json.json'):
     # А вот это уже попахивает:
     assert list(data_scanner.collected_configs['test']['v_1'].keys()) == [
         'dtypes_', 'columns_', 'shape_',
-        'numeric_columns_stats', 'unique_types',
+        'numeric_columns_stats', 'unique_types', 'bootstrap_stats',
     ]
 
 
