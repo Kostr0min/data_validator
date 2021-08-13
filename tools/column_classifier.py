@@ -1,77 +1,77 @@
 import pandas as pd
 import numpy as np
 import typing
+from pandas.errors import OutOfBoundsDatetime
+from dateutil.parser import ParserError
 
 
 class ColumnClassifier:
     def __init__(self):
-        self.schema_container: typing.Dict[typing.AnyStr, typing.AnyStr] = {}
-        self._numeric: typing.List[typing.AnyStr] = []
-        self._datetime: typing.List[typing.AnyStr] = []
-        self._category: typing.List[typing.AnyStr] = []
-        self._id: typing.List[typing.AnyStr] = []
+        self.schema_container: typing.Dict[str, typing.Dict[str, typing.List]] = {}
 
     def schema(self,
                data: pd.DataFrame,
-               data_name: typing.AnyStr = 'init',
-               to_drop: typing.Union[typing.List, None] = None) -> typing.Dict[typing.AnyStr, typing.AnyStr]:
-        self.__delete__()
-
+               data_name: str = 'init',
+               to_drop: typing.Union[typing.List, None] = None) -> typing.Dict[str, typing.Dict[str, typing.List]]:
         data_cut: pd.DataFrame = data.drop(columns=to_drop) if to_drop else data
-        # Попахивает
-        self.extract_numeric(data_cut)
-        self.extract_datetime(data_cut)
-        self.extract_id(data_cut)
-        self.extract_category(data_cut, 0.2)
-        _object = list(set(data_cut.columns.to_list()) -
-                       set(self._id + self._datetime + self._category + self._numeric))
 
-        self.schema_container.update({data_name: dict(numeric=self._numeric,
-                                                      datetime=self._datetime,
-                                                      id=self._id,
-                                                      category=self._category,
-                                                      object=_object)})
+        _numeric = self.extract_numeric(data_cut)
+        _datetime = self.extract_datetime(data_cut)
+        _id, _numeric = self.extract_id(data_cut, numeric_columns=_numeric)
+        _category, _numeric = self.extract_category(data_cut, numeric_columns=_numeric, threshold=0.2)
+        _object = list(set(data_cut.columns.to_list()) -
+                       set(_id + _datetime + _category + _numeric))
+
+        self.schema_container.update({data_name: dict(numeric=_numeric,
+                                                      datetime=_datetime,
+                                                      id=_id,
+                                                      category=_category,
+                                                      object=_object,
+                                                      not_used=to_drop)})
 
         return self.schema_container
 
-    def extract_numeric(self, data: pd.DataFrame) -> typing.NoReturn:
-        numeric_columns: typing.List[typing.AnyStr] = [column for column in data.select_dtypes(include=np.number)]
+    @staticmethod
+    def extract_numeric(data: pd.DataFrame) -> typing.List[str]:
+        numeric_columns: typing.List[str] = [column for column in data.select_dtypes(include=np.number)]
         for column in data.select_dtypes(include=[np.object_, 'category']).columns:
             try:
                 data.loc[:, column].astype(dtype=np.number)
                 numeric_columns.append(column)
             except ValueError:
                 continue
-        self._numeric.extend(numeric_columns)
+        return numeric_columns
 
-    def extract_datetime(self, data: pd.DataFrame) -> typing.NoReturn:
-        datetime_columns: typing.List[typing.AnyStr] = [column for column in data.select_dtypes(include=np.datetime64)]
+    @staticmethod
+    def extract_datetime(data: pd.DataFrame) -> typing.List[str]:
+        datetime_columns: typing.List[str] = [column for column in data.select_dtypes(include=np.datetime64)]
         for column in data.select_dtypes(include=[np.object_, 'category']).columns:
             try:
                 data.loc[:, column].astype(dtype=np.datetime64)
                 datetime_columns.append(column)
-            except (TypeError, ValueError):
+            except (TypeError, ValueError, ParserError, OutOfBoundsDatetime):
                 continue
-        self._datetime.extend(datetime_columns)
+        return datetime_columns
 
-    def extract_id(self, data: pd.DataFrame) -> typing.NoReturn:
-        for column in self._numeric:
+    @staticmethod
+    def extract_id(data: pd.DataFrame, numeric_columns: typing.List[str]) -> (typing.List[str], typing.List[str]):
+        id_columns: typing.List[str] = []
+        for column in numeric_columns:
             values = data.loc[:, column]
             if sum(np.abs(values.diff()[1:] - 1) < 1e-7) & (values.nunique() == values.size):
-                self._id.append(column)
-                if column in self._numeric:
-                    self._numeric.remove(column)
+                id_columns.append(column)
+                numeric_columns.remove(column)
+        return id_columns, numeric_columns
 
-    def extract_category(self, data: pd.DataFrame, threshold: float = 0.2) -> typing.NoReturn:
+    @staticmethod
+    def extract_category(data: pd.DataFrame,
+                         numeric_columns: typing.List[str],
+                         threshold: float = 0.2) -> (typing.List[str], typing.List[str]):
+        category_columns: typing.List[str] = []
         for column in data.columns:
             interim: pd.Series = data.loc[:, column]
             if interim.nunique() / interim.size <= threshold:
-                self._category.append(column)
-                if column in self._numeric:
-                    self._numeric.remove(column)
-
-    def __delete__(self):
-        self._id.clear()
-        self._numeric.clear()
-        self._category.clear()
-        self._datetime.clear()
+                category_columns.append(column)
+                if column in numeric_columns:
+                    numeric_columns.remove(column)
+        return category_columns, numeric_columns
