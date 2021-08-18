@@ -70,8 +70,7 @@ class FitDistr:
             params_distribution['median'].append(np.median(sampled))
         left_b = round((1 - (conf_level / 100)) / 2 * n_bootstrap)
         right_b = round((1 + (conf_level / 100)) / 2 * n_bootstrap)
-        for param in params_distribution.keys():
-            params_distribution[param] = sorted(params_distribution[param])
+
         bootstrap_stat = {
             'mean_value': np.mean(params_distribution['mean']),
             'mean_value_ci': [

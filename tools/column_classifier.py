@@ -1,43 +1,72 @@
-<<<<<<< HEAD
 import typing
 
 import numpy as np
 import pandas as pd
 from dateutil.parser import ParserError
 from pandas.errors import OutOfBoundsDatetime
-=======
-import pandas as pd
-import numpy as np
-import typing
-from pandas.errors import OutOfBoundsDatetime
-from dateutil.parser import ParserError
 
 
 class ColumnClassifier:
     def __init__(self):
         self.schema_container: typing.Dict[str, typing.Dict[str, typing.List]] = {}
 
-    def schema(self,
-               data: pd.DataFrame,
-               data_name: str = 'init',
-               to_drop: typing.Union[typing.List, None] = None) -> typing.Dict[str, typing.Dict[str, typing.List]]:
+    def schema(
+        self,
+        data: pd.DataFrame,
+        data_name: str = 'init',
+        to_drop: typing.Union[typing.List, None] = None,
+    ) -> typing.Dict[str, typing.Dict[str, typing.List]]:
         data_cut: pd.DataFrame = data.drop(columns=to_drop) if to_drop else data
 
         _numeric = self.extract_numeric(data_cut)
         _datetime = self.extract_datetime(data_cut)
         _id, _numeric = self.extract_id(data_cut, numeric_columns=_numeric)
         _category, _numeric = self.extract_category(data_cut, numeric_columns=_numeric, threshold=0.2)
-        _object = list(set(data_cut.columns.to_list()) -
-                       set(_id + _datetime + _category + _numeric))
+        _object = list(
+            set(data_cut.columns.to_list()) -
+            set(_id + _datetime + _category + _numeric),
+        )
 
-        self.schema_container.update({data_name: dict(numeric=_numeric,
-                                                      datetime=_datetime,
-                                                      id=_id,
-                                                      category=_category,
-                                                      object=_object,
-                                                      not_used=to_drop)})
+        self.schema_container.update({
+            data_name: dict(
+                numeric=_numeric,
+                datetime=_datetime,
+                id=_id,
+                category=_category,
+                object=_object,
+                not_used=to_drop,
+            ),
+        })
 
         return self.schema_container
+
+    @classmethod
+    def classify_columns(
+        cls, data: pd.DataFrame, data_name: str = 'init',
+        columns_to_drop: typing.Union[typing.List, None] = None,
+    ) -> dict:
+
+        data_cut = data.drop(columns=columns_to_drop) if columns_to_drop else data
+
+        _numeric = cls.extract_numeric(data_cut)
+        _datetime = cls.extract_datetime(data_cut)
+        _id, _numeric = cls.extract_id(data_cut, numeric_columns=_numeric)
+        _category, _numeric = cls.extract_category(data_cut, numeric_columns=_numeric, threshold=0.2)
+        _object = list(
+            set(data_cut.columns.to_list()) -
+            set(_id + _datetime + _category + _numeric),
+        )
+
+        return {
+            data_name: dict(
+                numeric=_numeric,
+                datetime=_datetime,
+                id=_id,
+                category=_category,
+                object=_object,
+                not_used=columns_to_drop,
+            ),
+        }
 
     @staticmethod
     def extract_numeric(data: pd.DataFrame) -> typing.List[str]:
@@ -72,9 +101,11 @@ class ColumnClassifier:
         return id_columns, numeric_columns
 
     @staticmethod
-    def extract_category(data: pd.DataFrame,
-                         numeric_columns: typing.List[str],
-                         threshold: float = 0.2) -> (typing.List[str], typing.List[str]):
+    def extract_category(
+        data: pd.DataFrame,
+        numeric_columns: typing.List[str],
+        threshold: float = 0.2,
+    ) -> (typing.List[str], typing.List[str]):
         category_columns: typing.List[str] = []
         for column in data.columns:
             interim: pd.Series = data.loc[:, column]
