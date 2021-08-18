@@ -1,0 +1,213 @@
+{
+    "test": {
+        "v_2": {
+            "dtypes_": {
+                "enrollee_id": "int64",
+                "city": "object",
+                "city_development_index": "float64",
+                "gender": "object",
+                "relevent_experience": "object",
+                "enrolled_university": "object",
+                "education_level": "object",
+                "major_discipline": "object",
+                "experience": "object",
+                "company_size": "object",
+                "company_type": "object",
+                "last_new_job": "object",
+                "training_hours": "int64",
+                "target": "float64"
+            },
+            "columns_": [
+                "enrollee_id",
+                "city",
+                "city_development_index",
+                "gender",
+                "relevent_experience",
+                "enrolled_university",
+                "education_level",
+                "major_discipline",
+                "experience",
+                "company_size",
+                "company_type",
+                "last_new_job",
+                "training_hours",
+                "target"
+            ],
+            "shape_": [
+                19158,
+                14
+            ],
+            "numeric_columns_stats": {
+                "enrollee_id": {
+                    "count": 19158.0,
+                    "mean": 16875.358179350664,
+                    "std": 9616.292592160944,
+                    "min": 1.0,
+                    "25%": 8554.25,
+                    "50%": 16982.5,
+                    "75%": 25169.75,
+                    "max": 33380.0
+                },
+                "city_development_index": {
+                    "count": 19158.0,
+                    "mean": 0.8288480008351603,
+                    "std": 0.12336175686054494,
+                    "min": 0.4479999999999999,
+                    "25%": 0.74,
+                    "50%": 0.903,
+                    "75%": 0.92,
+                    "max": 0.949
+                },
+                "training_hours": {
+                    "count": 19158.0,
+                    "mean": 65.36689633573442,
+                    "std": 60.058461924677644,
+                    "min": 1.0,
+                    "25%": 23.0,
+                    "50%": 47.0,
+                    "75%": 88.0,
+                    "max": 336.0
+                },
+                "target": {
+                    "count": 19158.0,
+                    "mean": 0.24934753105752167,
+                    "std": 0.4326466344562528,
+                    "min": 0.0,
+                    "25%": 0.0,
+                    "50%": 0.0,
+                    "75%": 0.0,
+                    "max": 1.0
+                }
+            },
+            "unique_types": {
+                "enrollee_id": [
+                    "int"
+                ],
+                "city": [
+                    "str"
+                ],
+                "city_development_index": [
+                    "float"
+                ],
+                "gender": [
+                    "str",
+                    "float"
+                ],
+                "relevent_experience": [
+                    "str"
+                ],
+                "enrolled_university": [
+                    "str",
+                    "float"
+                ],
+                "education_level": [
+                    "str",
+                    "float"
+                ],
+                "major_discipline": [
+                    "str",
+                    "float"
+                ],
+                "experience": [
+                    "str",
+                    "float"
+                ],
+                "company_size": [
+                    "float",
+                    "str"
+                ],
+                "company_type": [
+                    "float",
+                    "str"
+                ],
+                "last_new_job": [
+                    "str",
+                    "float"
+                ],
+                "training_hours": [
+                    "int"
+                ],
+                "target": [
+                    "float"
+                ]
+            },
+            "classified_columns": {
+                "init": {
+                    "numeric": [],
+                    "datetime": [],
+                    "id": [
+                        "enrollee_id"
+                    ],
+                    "category": [
+                        "city",
+                        "city_development_index",
+                        "gender",
+                        "relevent_experience",
+                        "enrolled_university",
+                        "education_level",
+                        "major_discipline",
+                        "experience",
+                        "company_size",
+                        "company_type",
+                        "last_new_job",
+                        "training_hours",
+                        "target"
+                    ],
+                    "object": [],
+                    "not_used": null
+                }
+            },
+            "bootstrap_stats": {
+                "enrollee_id": {
+                    "mean_value": 16873.333788600063,
+                    "mean_value_ci": [
+                        16792.075373212236,
+                        16784.62318613634
+                    ],
+                    "median_value": 16986.0,
+                    "median_value_ci": [
+                        16883.0,
+                        16736.5
+                    ]
+                },
+                "city_development_index": {
+                    "mean_value": 0.8288664973379268,
+                    "mean_value_ci": [
+                        0.8284958241987682,
+                        0.82845871176532
+                    ],
+                    "median_value": 0.903,
+                    "median_value_ci": [
+                        0.899,
+                        0.903
+                    ]
+                },
+                "training_hours": {
+                    "mean_value": 65.38322716358701,
+                    "mean_value_ci": [
+                        66.32560810105439,
+                        65.48298360998017
+                    ],
+                    "median_value": 47.0,
+                    "median_value_ci": [
+                        48.0,
+                        47.0
+                    ]
+                },
+                "target": {
+                    "mean_value": 0.24937185509969725,
+                    "mean_value_ci": [
+                        0.24851237081114938,
+                        0.25383651738177265
+                    ],
+                    "median_value": 0.0,
+                    "median_value_ci": [
+                        0.0,
+                        0.0
+                    ]
+                }
+            }
+        },
+        "last_version": "v_2"
+    }
+}

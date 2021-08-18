@@ -65,7 +65,7 @@ class FitDistr:
     def bootstrapper(cls, array: np.array, n_bootstrap: int = 1000, conf_level: int = 95) -> dict:
         params_distribution = {'mean': [], 'median': []}
         for i in range(n_bootstrap):
-            sampled = np.random.choice(array, array.shape[0])
+            sampled = np.random.choice(array, array.shape[0], replace=True)
             params_distribution['mean'].append(np.mean(sampled))
             params_distribution['median'].append(np.median(sampled))
         left_b = round((1 - (conf_level / 100)) / 2 * n_bootstrap)

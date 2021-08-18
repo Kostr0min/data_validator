@@ -5,6 +5,7 @@ from typing import List
 import numpy as np
 import pandas as pd
 
+from tools.column_classifier import ColumnClassifier
 from tools.stat_tools import FitDistr
 
 
@@ -112,6 +113,7 @@ class DataScanner:
             'columns_': dataframe.columns.to_list(), 'shape_': list(dataframe.shape),
             'numeric_columns_stats': self.statistics_extractor(dataframe),
             'unique_types': self.check_for_types_in_every_column(dataframe),
+            'classified_columns': ColumnClassifier.classify_columns(dataframe),
             'bootstrap_stats': self.bootstrap_stats_extractor(
                 dataframe,
                 numeric_columns=dataframe.select_dtypes(
