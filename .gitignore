@@ -3,3 +3,4 @@ dvalid
 .pytest_cache
 tests/.pytest_cache
 venv/
+*__pycache__/
