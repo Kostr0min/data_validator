@@ -1,11 +1,18 @@
 import numpy as np
 import seaborn as sns
 from fitter import Fitter
+from joblib import delayed
+from joblib import Parallel
 from scipy.stats import beta
 from scipy.stats import burr
 from scipy.stats import gamma
 from scipy.stats import lognorm
 from scipy.stats import norm
+
+
+def _random_choice_stats(array: np.array):
+    res = np.random.choice(array, array.shape[0], replace=True)
+    return np.mean(res), np.median(res)
 
 
 class FitDistr:
@@ -16,12 +23,12 @@ class FitDistr:
 
     @classmethod
     def _find_distribution(
-        cls,
-        data: np.array, summary: bool = True,
-        valid_distr: set = (
-            'gamma', 'lognorm',
-            'beta', 'burr', 'norm',
-        ),
+            cls,
+            data: np.array, summary: bool = True,
+            valid_distr: set = (
+                'gamma', 'lognorm',
+                'beta', 'burr', 'norm',
+            ),
     ):
         fit_dist = Fitter(
             data,
@@ -35,12 +42,12 @@ class FitDistr:
         return result_dist
 
     def find_distribution(
-        self,
-        data: np.array, summary: bool = True,
-        valid_distr: set = (
-            'gamma', 'lognorm',
-            'beta', 'burr', 'norm',
-        ),
+            self,
+            data: np.array, summary: bool = True,
+            valid_distr: set = (
+                'gamma', 'lognorm',
+                'beta', 'burr', 'norm',
+            ),
     ):
         result_dist = self._find_distribution(data, summary=True, valid_distr=valid_distr)
 
@@ -62,25 +69,57 @@ class FitDistr:
             return dist.rvs(*list(self.dist_with_params.values())[0], size=sample_size)
 
     @classmethod
-    def bootstrapper(cls, array: np.array, n_bootstrap: int = 1000, conf_level: int = 95) -> dict:
+    def bootstrapper_(cls, array: np.array, n_bootstrap: int = 10000, conf_level: int = 95) -> dict:
+        array_stats = Parallel(
+            n_jobs=4,
+            backend='loky',
+        )(delayed(_random_choice_stats)(array) for _ in range(n_bootstrap))
+
+        array_stats = np.array(array_stats)
+
+        left_p = 0 + (100 - conf_level) / 2
+        right_p = 100 - (100 - conf_level) / 2
+        bootstrap_stat = {
+            'mean_value': np.mean(array_stats[:, 0]),
+            'mean_value_ci': [
+                np.percentile(array_stats[:, 0], q=left_p),
+                np.percentile(array_stats[:, 0], q=right_p),
+            ],
+            'median_value': np.median(array_stats[:, 1]),
+            'median_value_ci': [
+                np.percentile(array_stats[:, 1], q=left_p),
+                np.percentile(array_stats[:, 1], q=right_p),
+            ],
+        }
+
+        return bootstrap_stat
+
+    @classmethod
+    def bootstrapper(cls, array: np.array, n_bootstrap: int = 10000, conf_level: int = 95) -> dict:
         params_distribution = {'mean': [], 'median': []}
         for i in range(n_bootstrap):
             sampled = np.random.choice(array, array.shape[0], replace=True)
             params_distribution['mean'].append(np.mean(sampled))
             params_distribution['median'].append(np.median(sampled))
-        left_b = round((1 - (conf_level / 100)) / 2 * n_bootstrap)
-        right_b = round((1 + (conf_level / 100)) / 2 * n_bootstrap)
+        # left_b = round((1 - (conf_level / 100)) / 2 * n_bootstrap)
+        # right_b = round((1 + (conf_level / 100)) / 2 * n_bootstrap)
+        #
+        # for param in params_distribution.keys():
+        #     params_distribution[param] = sorted(params_distribution)
+
+        left_p = 0 + (100 - conf_level) / 2
+        right_p = 100 - (100 - conf_level) / 2
 
         bootstrap_stat = {
             'mean_value': np.mean(params_distribution['mean']),
             'mean_value_ci': [
-                params_distribution['mean'][left_b],
-                params_distribution['mean'][right_b],
+                np.percentile(params_distribution['mean'], q=left_p),
+                np.percentile(params_distribution['mean'], q=right_p),
             ],
-            'median_value': np.median(params_distribution['median']),
+            'median_value': np.mean(params_distribution['median']),
             'median_value_ci': [
-                params_distribution['median'][left_b],
-                params_distribution['median'][right_b],
+                np.percentile(params_distribution['median'], q=left_p),
+                np.percentile(params_distribution['median'], q=right_p),
             ],
         }
 
