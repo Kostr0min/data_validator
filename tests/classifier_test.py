@@ -1,23 +1,29 @@
 import typing
+
+import numpy as np
+import pandas as pd
 import pytest
 
-import pandas as pd
-import numpy as np
-
-from tools.column_classifier import ColumnClassifier
 from tests.conftest import test_data
+from tools.column_classifier import ColumnClassifier
 
 
 @pytest.fixture()
 def test_answers():
-    return dict(numeric=['enrollee_id', 'city_development_index', 'training_hours', 'target'],
-                datetime=['a', 'b'],
-                id=[],
-                category=(['city', 'city_development_index', 'gender',
-                           'relevent_experience', 'enrolled_university',
-                           'education_level', 'major_discipline',
-                           'experience', 'company_size', 'company_type',
-                           'last_new_job', 'training_hours', 'target'], ['enrollee_id']))
+    return dict(
+        numeric=['enrollee_id', 'city_development_index', 'training_hours', 'target'],
+        datetime=['a', 'b'],
+        id=[],
+        category=(
+            [
+                'city', 'city_development_index', 'gender',
+                'relevent_experience', 'enrolled_university',
+                'education_level', 'major_discipline',
+                'experience', 'company_size', 'company_type',
+                'last_new_job', 'training_hours', 'target',
+            ], ['enrollee_id'],
+        ),
+    )
 
 
 def test_numeric(test_data, test_answers):
@@ -45,10 +51,11 @@ def test_datetime(test_data, test_answers):
     _datetime = classifier.extract_datetime(data)
     assert isinstance(_datetime, typing.List)
     # После добавления дэйттаймов в ксв уберем
-    _data = pd.DataFrame({'a': pd.date_range(pd.Timestamp('today'), periods=10),
-                          'b': pd.date_range(pd.Timestamp('today'), periods=10, freq='D').strftime('%Y/%m/%d'),
-                          'c': range(10),
-                          'd': ['d'] * 10, })
+    _data = pd.DataFrame({
+        'a': pd.date_range(pd.Timestamp('today'), periods=10),
+        'b': pd.date_range(pd.Timestamp('today'), periods=10, freq='D').strftime('%Y/%m/%d'),
+        'c': range(10),
+        'd': ['d'] * 10, })
     _datetime = classifier.extract_datetime(_data)
     for obj in _datetime:
         assert isinstance(obj, str)
@@ -71,8 +78,10 @@ def test_id(test_data, test_answers):
     assert isinstance(_numeric, typing.List)
     assert set(_numeric) == set(numeric)
     # После добавления id в ксв уберем
-    _data = pd.DataFrame({'a': range(10),
-                          'b': np.arange(10) / 100})
+    _data = pd.DataFrame({
+        'a': range(10),
+        'b': np.arange(10) / 100,
+    })
     _id, _numeric = classifier.extract_id(_data, _data.columns.to_list())
     assert _id == ['a']
     assert _numeric == ['b']
@@ -101,10 +110,31 @@ def test_schema(test_data):
     classifier = ColumnClassifier()
     data = test_data
 
-    schema = classifier.schema(data, data_name='test', to_drop=['target'])
+    schema = classifier.schema(data, data_name='test', columns_to_drop=['target'])
     assert isinstance(schema, typing.Dict)
     assert 'test' in [*classifier.schema_container]
     assert len(schema.get('test', [])) == 6
     keys = ['numeric', 'datetime', 'id', 'category', 'object', 'not_used']
     schema_keys = [*schema.get('test', None)]
     assert set(keys) == set(schema_keys)
+
+
+def test_apply_schema(test_data):
+    classifier = ColumnClassifier()
+    data = test_data
+
+    new_data = classifier.apply_schema(data)
+    assert set(data.columns.to_list()) == set(new_data.columns.to_list())
+    assert data.size == new_data.size
+
+    assert classifier.schema_container.get('inhouse', None)
+    schema = classifier.schema_container.get('inhouse', None)
+
+    dtype_dict = {
+        'numeric': np.number,
+        'datetime': np.datetime64,
+        'category': pd.api.types.CategoricalDtype(),
+    }
+    for column_type, column_dtype in dtype_dict.items():
+        new_data_columns = new_data.select_dtypes(column_dtype).columns.to_list()
+        assert set(new_data_columns) == set(schema.get(column_type, None))
